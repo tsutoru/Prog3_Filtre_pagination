@@ -17,50 +17,82 @@ import java.util.List;
 
 public class DataRetriever {
 
-    public List<Category> getAllCategories() throws SQLException{
-        String sql="SELECT id,name FROM product_category ORDER BY id";
-        List<Category> out=new ArrayList<>();
-        try(Connection c= DBConnection.getDBConnection();
-            PreparedStatement ps=c.prepareStatement(sql);
-            ResultSet rs=ps.executeQuery()){
-            while(rs.next()){
-                out.add(new Category(rs.getInt("id"),rs.getString("name")));
+    public List<Category> getAllCategories() throws SQLException {
+
+        String sqlQuery = "SELECT id, name FROM product_category ORDER BY id";
+
+        List<Category> categories = new ArrayList<>();
+
+        try (Connection databaseConnection = DBConnection.getDBConnection();
+             PreparedStatement preparedStatement = databaseConnection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int categoryId = resultSet.getInt("id");
+                String categoryName = resultSet.getString("name");
+
+                Category category = new Category(categoryId, categoryName);
+                categories.add(category);
             }
         }
-        return out;
+
+        return categories;
     }
 
-    public List<Product> getProductList(int page,int size) throws SQLException{
-        String sql="SELECT p.id pid,p.name pname,p.price,p.creation_datetime,"+
-                "c.id cid,c.name cname "+
-                "FROM product p LEFT JOIN product_category c ON p.category_id=c.id "+
-                "ORDER BY p.id LIMIT ? OFFSET ?";
-        page=Math.max(1,page); size=Math.max(1,size);
-        int offset=(page-1)*size;
-        List<Product> out=new ArrayList<>();
 
-        try(Connection c=DBConnection.getDBConnection();
-            PreparedStatement ps=c.prepareStatement(sql)){
-            ps.setInt(1,size);
-            ps.setInt(2,offset);
-            try(ResultSet rs=ps.executeQuery()){
-                while(rs.next()){
-                    Category cat=null;
-                    int cid=rs.getInt("cid");
-                    if(!rs.wasNull()) cat=new Category(cid,rs.getString("cname"));
-                    Timestamp ts=rs.getTimestamp("creation_datetime");
-                    Instant inst=ts!=null?ts.toInstant():null;
-                    out.add(new Product(
-                            rs.getInt("pid"),
-                            rs.getString("pname"),
-                            rs.getDouble("price"),
-                            inst,
-                            cat));
+    public List<Product> getProductList(int page, int size) throws SQLException {
+
+        String sqlQuery =
+                "SELECT p.id AS product_id, p.name AS product_name, p.price, p.creation_datetime, " +
+                        "c.id AS category_id, c.name AS category_name " +
+                        "FROM product p " +
+                        "LEFT JOIN product_category c ON p.category_id = c.id " +
+                        "ORDER BY p.id " +
+                        "LIMIT ? OFFSET ?";
+
+        List<Product> products = new ArrayList<>();
+
+        page = Math.max(1, page);
+        size = Math.max(1, size);
+        int offset = (page - 1) * size;
+
+        try (Connection databaseConnection = DBConnection.getDBConnection();
+             PreparedStatement preparedStatement = databaseConnection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, size);
+            preparedStatement.setInt(2, offset);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                while (resultSet.next()) {
+
+                    int categoryId = resultSet.getInt("category_id");
+                    String categoryName = resultSet.getString("category_name");
+
+                    Category category = null;
+                    if (!resultSet.wasNull()) {
+                        category = new Category(categoryId, categoryName);
+                    }
+
+                    Timestamp timestamp = resultSet.getTimestamp("creation_datetime");
+                    Instant creationInstant = (timestamp != null ? timestamp.toInstant() : null);
+
+                    Product product = new Product(
+                            resultSet.getInt("product_id"),
+                            resultSet.getString("product_name"),
+                            resultSet.getDouble("price"),
+                            creationInstant,
+                            category
+                    );
+
+                    products.add(product);
                 }
             }
         }
-        return out;
+
+        return products;
     }
+
 
     public List<Product> getProductsByCriteria(String productName,String categoryName,
                                                Instant creationMin,Instant creationMax,

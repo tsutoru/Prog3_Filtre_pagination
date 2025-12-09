@@ -20,33 +20,22 @@ public class Product {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public Instant getCreationDateTime() {
         return creationDateTime;
     }
 
-    public void setCreationDateTime(Instant creationDateTime) {
-        this.creationDateTime = creationDateTime;
-    }
 
     public Category getCategory() {
         return category;
     }
 
-    public void setCategory(Category category) {
-        this.category = category;
-    }
+
     @Override
     public String toString() {
         return "Product{id=" + id + ", name='" + name + "', creationDateTime=" + creationDateTime + ", category=" + category + "}";
